@@ -4,7 +4,6 @@
 
 # load data----
 source("scripts/download_shootdensity_survey-EX.R")
-shtd<-read.csv(paste0("odata/","shootdensity_survey",format(Sys.time(), '_%d_%B_%Y'),".csv"))
 
 # load packages----
 source("scripts/install_packages_function.R")
