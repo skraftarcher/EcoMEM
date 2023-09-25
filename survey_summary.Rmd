@@ -27,3 +27,14 @@ sg.table
 ```{r}
 plants.tab
 ```
+
+```{r}
+urch.table
+
+```
+
+```{r}
+inv.table
+```
+
+

@@ -17,6 +17,9 @@ source("scripts/download_percentcover_survey-EX.R")
 source("scripts/download_canopy_survey-EX.R")
 source("scripts/download_shootdensity_survey-EX.R")
 source("scripts/download_waterquality_survey-EX.R")
+source("scripts/download_urchinsize_survey-EX.R")
+source("scripts/download_urchincount_survey-EX.R")
+source("scripts/download_sessileinverts_survey-EX.R")
 
 # organize/summarize data by bay
 #propeller scars----
@@ -62,6 +65,7 @@ prop.sum2<-prop.sum%>% # start to calculate summary statistics
          n.sites=length(unique(siteID)))%>% #number of sites visited
   filter(length!=0)%>%# now that we know how many surveys we did we can get rid of sites/entries that are 0 length
   summarize(n.withprops=length(unique(paste0(date,siteID))),# number of surveys where prop scars were seen
+            n.site.visits=n.site.visits,
             prop.withscars=n.withprops/n.site.visits,# proportion of surveys with prop scars
             n.prop.scars=n(),#total number of prop scars encountered
             mean.prop.scars=n.prop.scars/n.site.visits,#mean number of prop scars per survey
@@ -254,7 +258,7 @@ sht3<-left_join(pc2,shtd2)%>% # do the same thing we did with % cover to make su
   pivot_wider(names_from = quadrat,values_from=shoot.density,values_fill=0)%>%
   pivot_longer(`1`:`4`,names_to="quadrat",values_to = "shoot.density")
 
-sht.sum2<-left_join(sht.sum,bay.ds)%>%
+sht.sum2<-left_join(sht3,bay.ds)%>%
   group_by(bay,siteID,taxa)%>% # group to calculate survey-specific means
   summarize(m.shts=round(mean(shoot.density),2))%>%# calculate survey-specific mean shoot density
   ungroup()%>%
@@ -377,4 +381,107 @@ plants.tab<-kbl(plant,booktabs=T,
   column_spec(5,width="1in")%>%
   column_spec(6,width="1in")
   
-  
+#urchins----
+
+#counts first
+uc2<-left_join(urchin_count,bay.ds)%>%
+  mutate(date=mdy(date),#turn date into a date object
+         mnth=month(date),#extract the month of the survey
+         udens=tally/50)%>%# chalculate urchin density- transect was 50m by 1m
+  group_by(mnth,bay)%>%
+  summarize(m.urch=round(mean(udens),2),#mean urchin density
+            max.urch=round(max(udens),2))%>%# maximum urchin density
+  distinct()%>%
+  mutate(mnth=case_when(
+    mnth==5~"May",
+    mnth==6~"June",
+    mnth==7~"July"),
+    u.c=paste(m.urch,"(",max.urch,")"))%>%
+  select(-m.urch,-max.urch)%>%
+  pivot_wider(names_from = mnth,values_from = c(u.c))%>%
+  mutate(July=ifelse(is.na(July),"-",July))
+
+us2<-left_join(urchin_size,bay.ds)%>%
+  mutate(date=mdy(date),#turn date into a date object
+         mnth=month(date))%>%#extract the month of the survey
+  group_by(mnth,bay)%>%
+  summarize(min.size=min(size),
+            max.size=max(size),
+            med.size=median(size))%>%
+  distinct()%>%
+  mutate(u.s=paste(med.size,"(",min.size,"-",max.size,")"))%>%
+  select(-min.size,-max.size,-med.size)%>%
+  pivot_wider(names_from = mnth,values_from = u.s)
+
+urch<-left_join(uc2,us2)%>%
+  mutate(`5`=ifelse(is.na(`5`),"-",`5`),# put `-` whereever there were no urchins measured
+         `6`=ifelse(is.na(`6`),"-",`6`),
+         `7`=ifelse(is.na(`7`),"-",`7`),
+         bay=case_when(
+           bay=="NB"~"North Bay",
+           bay=="WB"~"West Bay",
+           bay=="SJB"~"St. Joseph Bay",
+           bay=="SAB"~"St. Andrew Bay"))%>%
+  rename(Region=bay)
+
+# put rows in order for table
+urch$Region<-factor(urch$Region,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay"))
+urch<-arrange(urch,Region)
+
+# change column name for table
+colnames(urch)[5:7]<-c("May","June","July")
+
+#make table
+urch.table<-kbl(urch,booktabs=T,align="c",
+                format = 'latex', escape = FALSE,
+                 caption="Mean Urchin density (maximum) and median size (min-max) recorded in each region over the course of the survey.")%>%
+  add_header_above(c("","Urchins per square meter"=3,"Urchin size (cm)"=3))%>%
+  column_spec(1,width="1in")%>%
+  column_spec(2,width="0.8in")%>%
+  column_spec(3,width="0.8in")%>%
+  column_spec(4,width="0.8in")%>%
+  column_spec(5,width="1.1in")%>%
+  column_spec(6,width="1.1in")%>%
+  column_spec(7,width="1.1in")
+
+# invertebrate community----
+# make dataset wide to take advantage of vegan package
+inv2<-inverts%>%
+  mutate(date=mdy(date))%>%
+  right_join(pc2)%>%# join to pc2 so that surveys and quadrats that have no inverts are give a value of 0
+  left_join(bay.ds)%>%
+  group_by(date,bay,siteID,taxa)%>%
+  summarize(abundance=sum(abundance))%>%# add abundance together for each survey
+  distinct()%>%# keep only distinct rows
+  pivot_wider(names_from = taxa,values_from=abundance,values_fill=0)%>%#make dataset wide
+  select(-`NA`)# remove the NA column
+
+inv3<-data.frame(Region=inv2$bay,
+                 spr=specnumber(inv2[,-1:-3]),
+                 div=diversity(inv2[,-1:-3]))%>%
+  group_by(Region)%>%
+  summarize(m.spr=round(mean(spr),2),
+            sd.sp=round(sd(spr),2),
+            m.div=round(mean(div),2),
+            sd.div=round(sd(div),2))%>%
+  distinct()%>%
+  mutate(`Taxa richness`=paste(m.spr, "$\\pm$", sd.sp),
+         `Taxa diversity (H)`=paste(m.div, "$\\pm$",sd.div),
+         Region=case_when(
+           Region=="NB"~"North Bay",
+           Region=="WB"~"West Bay",
+           Region=="SJB"~"St. Joseph Bay",
+           Region=="SAB"~"St. Andrew Bay"))%>%
+  select(Region,`Taxa richness`,`Taxa diversity (H)`)
+
+# put rows in order for table
+inv3$Region<-factor(inv3$Region,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay"))
+inv3<-arrange(inv3,Region)
+
+# make table
+inv.table<-kbl(inv3,booktabs = T,align="c",
+               format = 'latex', escape = FALSE,
+               caption="Sessile and slow-moving invertebrate taxa richness and diversity.")%>%
+  column_spec(1,width="1.15in")%>%
+  column_spec(2,width = "1.3in")%>%
+  column_spec(3,width="1.3in")
