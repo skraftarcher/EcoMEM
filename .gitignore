@@ -5,6 +5,8 @@
 /figures
 .Rproj
 .rds
+.log
+.pdf
 
 
 # History files

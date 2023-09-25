@@ -1,0 +1,29 @@
+---
+title: "Survey Summary"
+author: "Stephanie K. Archer"
+date: "`r Sys.Date()`"
+geometry: "left=0.5in,right=0.5in,top=0.5in,bottom=0.5in"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
+source("scripts/summarize_survey_seagrass.R")
+```
+
+```{r}
+prop.table
+```
+
+```{r}
+can.table
+```
+
+```{r}
+sg.table
+```
+
+
+```{r}
+plants.tab
+```
