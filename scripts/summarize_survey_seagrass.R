@@ -368,6 +368,7 @@ plant$Region<-factor(plant$Region,levels=c("St. Joseph Bay","St. Andrew Bay","No
 plant<-arrange(plant,Region)
 plant<-plant[,2:7]
 
+
 #make table
 plants.tab<-kbl(plant,booktabs=T,
                 format = 'latex', escape = FALSE,
