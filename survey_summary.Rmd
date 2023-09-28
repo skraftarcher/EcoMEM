@@ -37,4 +37,13 @@ urch.table
 inv.table
 ```
 
+```{r}
+grow.table
+```
+
+```{r}
+bio.table
+```
+
+
 

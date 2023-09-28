@@ -493,35 +493,49 @@ inv.table<-kbl(inv3,booktabs = T,align="c",
 # calculate total, average, and stdev of biomass
 # for each seagrass Tt in each region
 bio.sum<-biomass%>%# start organizing for table
-  group_by(bay)%>% # group to calculate survey-specific values
-  filter(species=="Tt")%>% #select Tt data only
-  summarize(m.site.bio=round(mean(sample.weight,na.rm = T),2),# average biomass at each site
-         sd.site.bio=round(sd(sample.weight,na.rm = T),2),#standard deviation biomass at each site
-         sum.site.bio=round(sum(sample.weight,na.rm = T),2))%>%#total biomass per bay/region
-  mutate(bay=case_when(# turn region abbreviations into nice column labels for table
+  filter(sample.type!="epiphytes")%>%#remove epiphytes from biomass estimates
+  group_by(bay,siteID)%>% # group to calculate survey-specific values
+  summarize(sg.bio=sum(sample.weight,na.rm=T))%>%
+  distinct()%>%
+  ungroup()%>%
+  group_by(bay)%>%
+  #filter(species=="Tt")%>% #select Tt data only
+  summarize(m.site.bio=round(mean(sg.bio,na.rm = T),2),# average biomass at each site
+         sd.site.bio=round(sd(sg.bio,na.rm = T),2),#standard deviation biomass at each site
+         sum.site.bio=round(sum(sg.bio,na.rm = T),2))%>%#total biomass per bay/region
+  mutate(Region=case_when(# turn region abbreviations into nice column labels for table
         bay=="NB"~"North Bay",
         bay=="WB"~"West Bay",
         bay=="SJB"~"St. Joseph Bay",
-        bay=="SAB"~"St. Andrew Bay"))
+        bay=="SAB"~"St. Andrew Bay"),
+        sd.site.bio=ifelse(is.na(sd.site.bio),0,sd.site.bio),
+        `Mean biomass (g)`=paste(m.site.bio,"$\\pm$",sd.site.bio),
+        `Total above-ground biomass removed (g)`=sum.site.bio)%>%
+  select(Region,`Mean biomass (g)`,`Total above-ground biomass removed (g)`)
 
 # set order of regions for table
-bio.sum$Region<-factor(bio.sum$bay,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay"))
+bio.sum$Region<-factor(bio.sum$Region,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay","Total"))
 bio.sum<-arrange(bio.sum,Region)
-# change column name for table
-colnames(bio.sum)<-c("Region","Mean per site", "Standard Deviation", "Total")
 
-#repeat for Hw
-bio.sum2<-biomass%>%# start organizing for table
-  group_by(bay)%>% # group to calculate survey-specific values
-  filter(species=="Hw")%>% #select Hw data only
-  summarize(m.site.bio=round(mean(sample.weight,na.rm = T),2),# average biomass at each site
-            sd.site.bio=round(sd(sample.weight,na.rm = T),2),#standard deviation biomass at each site
-            sum.site.bio=round(sum(sample.weight,na.rm = T),2))%>%#total biomass per bay/region
-  mutate(bay=case_when(# turn region abbreviations into nice column labels for table
-        bay=="NB"~"North Bay",
-        bay=="WB"~"West Bay",
-        bay=="SJB"~"St. Joseph Bay",
-        bay=="SAB"~"St. Andrew Bay"))
+# add total row
+bio.total<-data.frame(v1="Total",v2="",v3=sum(bio.sum[,3]))
+colnames(bio.total)<-colnames(bio.sum)
+bio.sum<-bind_rows(bio.sum,bio.total)
+# change column name for table
+# colnames(bio.sum)<-c("Region","Mean per site", "Standard Deviation", "Total")
+
+# #repeat for Hw
+# bio.sum2<-biomass%>%# start organizing for table
+#   group_by(bay)%>% # group to calculate survey-specific values
+#   filter(species=="Hw")%>% #select Hw data only
+#   summarize(m.site.bio=round(mean(sample.weight,na.rm = T),2),# average biomass at each site
+#             sd.site.bio=round(sd(sample.weight,na.rm = T),2),#standard deviation biomass at each site
+#             sum.site.bio=round(sum(sample.weight,na.rm = T),2))%>%#total biomass per bay/region
+#   mutate(bay=case_when(# turn region abbreviations into nice column labels for table
+#         bay=="NB"~"North Bay",
+#         bay=="WB"~"West Bay",
+#         bay=="SJB"~"St. Joseph Bay",
+#         bay=="SAB"~"St. Andrew Bay"))
 
 #bio.sum3 is not working as intended, I was hoping to have redundant mean, sd, and total columns for Tt and Hw
 #I decided to report Hw in the text rather than making a larger table with a lot of 0s, 
@@ -530,32 +544,58 @@ bio.sum2<-biomass%>%# start organizing for table
 #   mutate(m.site.bio=ifelse(is.na(m.site.bio),0,m.site.bio))# turn any NAs into 0s
 # 
 
-# make table - does not work because I'm missing a few steps including joining mean +/- sd
+
+# make table 
 bio.table<-kbl(bio.sum,booktabs = T,align="c",
                format = 'latex', escape = FALSE,
-               caption="Biomass (g of dry weight) of Thalassia testudinum by region.")%>%
+               caption="Above-ground biomass (g of dry weight, mean $\\pm$ sd) of seagrass by region as well as the total amount of seagrass biomass removed for each region.")%>%
   column_spec(1,width="1.15in")%>%
   column_spec(2,width = "1.3in")%>%
   column_spec(3,width="1.3in")%>%
-  save_kable("biomass_table.png")
+  row_spec(4,hline_after=TRUE)
 
 #lab seagrass growth---
-#NONE OF THIS IS CORRECT - we need growth rate, not total growth
-# calculate total, average, and stdev of biomass
-# for seagrass Tt in each region
-grow.sum<-growth%>%# start organizing for table
-  group_by(bay)%>% # group to calculate survey-specific values
-  filter(species=="Tt")%>% #select Tt data only
-  summarize(m.new.length=round(mean(new.length,na.rm = T),2),# average biomass at each site
-            sd.new.length=round(sd(new.length,na.rm = T),2))%>%#standard deviation biomass at each site
-  mutate(bay=case_when(# turn region abbreviations into nice column labels for table
-    bay=="NB"~"North Bay",
-    bay=="WB"~"West Bay",
-    bay=="SJB"~"St. Joseph Bay",
-    bay=="SAB"~"St. Andrew Bay"))
+gdates<-biomass%>%
+  select(siteID,bay,mark.date,collect.date)%>%
+  distinct()
+
+grow2<-growth%>%
+  filter(!is.na(new.length))%>%
+  distinct()%>%
+  left_join(gdates)%>%
+  mutate(mark.date=mdy(mark.date),
+         collect.date=mdy(collect.date),
+         days.grow=as.numeric(collect.date-mark.date),
+         elong=new.length/days.grow)%>%
+  group_by(siteID,bay)%>%
+  mutate(site.elong=sum(new.length)/days.grow)%>%
+  ungroup()%>%
+  group_by(bay)%>%
+  mutate(mleaf=round(mean(elong),2),
+            sdleaf=round(sd(elong),2))%>%
+  select(bay,mleaf,sdleaf,site.elong)%>%
+  distinct()%>%
+  mutate(msite=round(mean(site.elong),2),
+            sdsite=ifelse(is.na(sd(site.elong)),0,round(sd(site.elong),2)))%>%
+  select(Region=bay,mleaf,sdleaf,msite,sdsite)%>%
+  distinct()%>%
+  mutate(`Leaf elongation rate`=paste(mleaf,"$\\pm$",sdleaf),
+         `Site-level elongation rate`=paste(msite,"$\\pm$",sdsite),
+         Region=case_when(# turn region abbreviations into nice column labels for table
+           Region=="NB"~"North Bay",
+           Region=="WB"~"West Bay",
+           Region=="SJB"~"St. Joseph Bay",
+           Region=="SAB"~"St. Andrew Bay"))%>%
+  select(Region,`Leaf elongation rate`,`Site-level elongation rate`)
 
 # set order of regions for table
-grow.sum$Region<-factor(grow.sum$bay,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay"))
-grow.sum<-arrange(grow.sum,Region)
-# change column name for table
-colnames(grow.sum)<-c("Region", "Mean per site", "Standard Deviation")
+grow2$Region<-factor(grow2$Region,levels=c("St. Joseph Bay","St. Andrew Bay","North Bay","West Bay","Total"))
+grow2<-arrange(grow2,Region)        
+
+# make table
+grow.table<-kbl(grow2,booktabs = T,align="c",
+                format = 'latex', escape = FALSE,
+                caption="Seagrass growth rates (elongation: cm/day) per leaf and total per site within each region.")%>%
+  column_spec(1,width="1.15in")%>%
+  column_spec(2,width = "1.3in")%>%
+  column_spec(3,width="1.3in")
