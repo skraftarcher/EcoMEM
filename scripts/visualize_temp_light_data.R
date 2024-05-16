@@ -31,7 +31,8 @@ hobo2<-bind_rows(hobo1,hobo2)%>%
   filter(date.time>=cutoff.date)%>%
   select(-Date,-cutoff.date)%>%
   group_by(plotID)%>%
-  mutate(max.date=max(date.time))%>%
+  mutate(max.date=max(date.time),
+         bay=ifelse(blockID %in% c("SA1","SA2","SA3","SA4","SA5","SA6"),"St. Andrews","St. Joe"))%>%
   filter(date.time<=max.date-minutes(20))
 
 # now plot!
@@ -40,13 +41,14 @@ theme_set(theme_bw()+theme(panel.grid = element_blank()))
 
 #temp
 ggplot(hobo2)+
-  geom_line(aes(x=date.time,y=temp.c,group=plotID,color=blockID))
+  geom_line(aes(x=date.time,y=temp.c,group=plotID,color=blockID))+
+  facet_wrap(vars(bay),nrow=2,scales="free_x")+
+  scale_color_viridis_d(option="D")
 
 #light
 ggplot(hobo2)+
-  geom_line(aes(x=date.time,y=light.lux,group=plotID,color=blockID))
+  geom_line(aes(x=date.time,y=light.lux,group=plotID,color=blockID))+
+  facet_wrap(vars(bay),nrow=2,scales="free_x")+
+  scale_color_viridis_d(option="D")
 
-#light by temp
-ggplot(hobo2)+
-  geom_point(aes(x=light.lux,y=temp.c,color=plotID))+
-  facet_wrap(~plotID,scales="free")
+
