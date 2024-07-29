@@ -30,7 +30,7 @@ psn.100<-ggplot(data=sg.prop,aes(x=scar.quantity.100m,color=bay))# this code say
 #now we can use this base to look at the relationship between the scar number at 100m and different seagrass
 # metrics
 
-# coiunts in 100m radius----
+# counts in 100m radius----
 psn.100+
   geom_point(aes(y=pc.m_H)) # you can look at each of these graphs by removing the hashtag from before the line - just make sure to only look at one line at a time
   # geom_point(aes(y=pc.m_S))

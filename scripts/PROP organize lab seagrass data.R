@@ -66,7 +66,6 @@ sg.totg<-sg.labb%>%
 # now on to morphometrics and growth (areal extension )
 # now organize the morphometrics
 sg.morph<-sg.lab2%>%
-  filter()
   mutate(new.length=as.numeric(new.length),# dealing with those NAs the same way we did for biomass
          width=as.numeric(width),
          grow.area=new.length*width,# calcualte the area of new growth
@@ -131,6 +130,12 @@ sg.lab.final<-left_join(sg.totg,sg.morph)%>%
   # to NA
   mutate(grow.length=ifelse(is.na(biom.per.day),NA,grow.length),
          grow.area=ifelse(is.na(biom.per.day),NA,grow.area))
+
+# bring in field/prop scar data to join onto this dataset
+sg.prop<-read.csv("wdata/PROP_combined_sg_prop.csv")
+
+sg.lab.final<-left_join(sg.lab.final,sg.prop)%>%
+  filter(!is.na(bay))
 # doing that last bit exposed a site with new growth biomass but no new growth length... trying to figure that out but for now - don't use seagrass growth length or area
-write.csv(sg.lab.final)
+write.csv(sg.lab.final,"wdata/PROP_sg_lab_combined.csv",row.names = FALSE)
          
