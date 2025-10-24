@@ -93,7 +93,8 @@ glmm.resids(Ttsd.len5)
                         AICc=c(performance_aicc(Ttsd.cnt),performance_aicc(Ttsd.cnt2),performance_aicc(Ttsd.cnt3),
                                performance_aicc(Ttsd.cnt4),performance_aicc(Ttsd.cnt5),performance_aicc(Ttsd.len),
                                performance_aicc(Ttsd.len2),performance_aicc(Ttsd.len3),performance_aicc(Ttsd.len4),performance_aicc(Ttsd.len5)))%>%
-    arrange(AICc))
+    arrange(AICc)%>%
+    mutate(delta.aicc=AICc-AICc[1]))
 
 # the 100m scar count model is the best fit
 sg.prop$bay<-factor(sg.prop$bay,levels = c("NB","SJB","SAB","WB"))
@@ -199,7 +200,7 @@ totsd.len5<-glmmTMB(total.shtd~scar.length.clipped.50m*bay+
 
 glmm.resids(totsd.len5)
 
-(h2shtd.aic<-data.frame(model=c("totsd.cnt","totsd.cnt2","totsd.cnt3","totsd.cnt4","totsd.cnt5",
+(h2shtdtot.aic<-data.frame(model=c("totsd.cnt","totsd.cnt2","totsd.cnt3","totsd.cnt4","totsd.cnt5",
                                 "totsd.len","totsd.len2","totsd.len3","totsd.len4","totsd.len5"),
                         AICc=c(performance_aicc(totsd.cnt),performance_aicc(totsd.cnt2),performance_aicc(totsd.cnt3),
                                performance_aicc(totsd.cnt4),performance_aicc(totsd.cnt5),performance_aicc(totsd.len),

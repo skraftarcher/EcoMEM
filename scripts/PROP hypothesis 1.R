@@ -9,6 +9,7 @@ lp("tidyverse")
 lp("lmerTest")
 lp("ggeffects")
 lp("glmmTMB")
+lp("performance")
 
 # load the data set - we didn't see halodule in SJB so leaving it out of these models
 sg.prop<-read.csv("wdata/PROP_combined_sg_prop.csv")%>%
@@ -92,7 +93,8 @@ glmm.resids(halsd.len5)
                         AICc=c(performance_aicc(halsd.cnt),performance_aicc(halsd.cnt2),performance_aicc(halsd.cnt3),
                                performance_aicc(halsd.cnt4),performance_aicc(halsd.cnt5),performance_aicc(halsd.len),
                                performance_aicc(halsd.len2),performance_aicc(halsd.len3),performance_aicc(halsd.len4),performance_aicc(halsd.len5)))%>%
-    arrange(AICc))
+    arrange(AICc)%>%
+    mutate(delta.aicc=AICc-AICc[1]))
 
 
 

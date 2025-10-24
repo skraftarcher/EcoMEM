@@ -7,7 +7,7 @@ source("scripts/install_packages_function.R")
 lp("tidyverse")
 lp("ggspatial")
 lp("sf")
-lp("rgdal")
+#lp("rgdal")
 lp("sp")
 lp("vegan")
 lp("lubridate")
@@ -235,3 +235,62 @@ for(i in 5:length(pcln)){
 }
 
 
+# make site map
+full.ds2<-full.ds%>%
+  separate(siteID,
+           into = c("bay", "num"),
+           sep = "(?<=[A-Za-z])(?=[0-9])",
+           remove=FALSE)
+
+full.oth<-filter(full.ds2,is.na(num))%>%
+  separate(siteID,
+           into = c("num","bay"),
+           sep = "(?<=[0-9])(?=[A-Za-z])",
+           remove=FALSE)%>%
+  mutate(bay=ifelse(is.na(bay),"SJB",bay))
+
+full.ds2<-full.ds2%>%
+  filter(!is.na(num))%>%
+  bind_rows(full.oth)%>%
+  mutate(bay=case_when(
+    bay=="NB"~"North Bay",
+    bay=="SAB"~"St. Andrew Bay",
+    bay=="SJB"~"St. Joe Bay",
+    bay=="WB"~"West Bay"))
+
+full.ds2$bay<-factor(full.ds2$bay,levels=c("North Bay","West Bay","St. Andrew Bay","St. Joe Bay"))
+
+sab.ds<-full.ds2%>%
+  filter(lat>29.9)
+
+sjb.ds<-full.ds2%>%
+  filter(lat<29.9)
+bay.colors<-data.frame(bay=c("North Bay","West Bay","St. Andrew Bay","St. Joe Bay"),
+                       colrs=c("#99d8c9","#41ae76","#005824","#d8b365"))
+
+lp("patchwork")
+
+(sabp<-ggplot()+
+  geom_sf(data=standrewbay)+
+  geom_point(data=sab.ds,
+             aes(y=lat,x=-long,color=bay),
+             size=3,alpha=.8)+
+  scale_color_manual(values=bay.colors[,2],name="")+
+    ylab("")+
+    xlab(""))
+  
+
+(sjbp<-ggplot()+
+  geom_sf(data=stjoebay)+
+  geom_point(data=sjb.ds,
+             aes(y=lat,x=-long,color=bay),
+             size=3,alpha=.8)+
+  scale_color_manual(values=bay.colors[4,2],name="")+
+  scale_x_continuous(breaks=c(-85.4,-85.35,-85.3))+
+    ylab("")+
+    xlab(""))
+
+
+sabp+sjbp+plot_layout(guides="collect")
+
+ggsave("figures/sab_sjb_survey_sites.jpg",width=12,height=8)
