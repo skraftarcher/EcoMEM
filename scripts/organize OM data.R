@@ -20,12 +20,12 @@ om2<-om%>%
     date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
     date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
     date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]),
-    OM=(sed.combust.weight-tray.weight)/(sed.dry.weight-tray.weight),
+    OM=(sed.dry.weight-sed.combust.weight)/(sed.dry.weight-tray.weight),
     dw.wt=sed.dry.weight/sed.wet.weight)%>%
   left_join(samplings[,3:4])%>%
   left_join(pinfo)%>%
   group_by(sampling,mnths,blockID,plotID,bay,scar,graze)%>%
-  mutate(max.date=max(date.processed))%>%
+  mutate(max.date=min(date.processed))%>%
   filter(date.processed==max.date)%>%
   select(sampling,mnths,blockID,plotID,bay,scar,graze,OMg.pergdw=OM,dw.wt)
 
