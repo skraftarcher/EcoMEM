@@ -5,7 +5,7 @@ lp("tidyverse")
 lp("readxl")
 
 # bring in logger data
-lt<-read.csv("wdata/hobodata_downloaded_2026-01-09.csv")%>%
+lt<-read.csv("wdata/hobodata_downloaded_2026-02-05.csv")%>%
   separate(date.time,into=c("date","time"),sep=" ")%>%
   mutate(time=ifelse(is.na(time),"00:00:00",time),
          date.time=ymd_hms(paste(date,time)),
@@ -19,7 +19,7 @@ ggplot(lt%>%
 
 lt<-filter(lt,light.lux<20000)
 
-samplings<-read_xlsx(paste0("odata/downloaded_2026-01-05_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
+samplings<-read_xlsx(paste0("odata/downloaded_2026-02-03_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
 date.established<-read_xlsx("odata/date_plot_established.xlsx",sheet=1)%>%
   rename(est=date)
 
