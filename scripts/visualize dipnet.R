@@ -13,7 +13,8 @@ change<-read.csv("wdata/change over course of study.csv")%>%
 # look at second sampling only for now
 dip2<-filter(dip,sampling=="s2")%>%
   group_by(plotID,sampling,UpdateTaxaID,blockID,bay,scar,graze)%>%
-  summarize(abundance=sum(abundance,na.rm=T))
+  summarize(abundance=sum(abundance,na.rm=T))%>%
+  left_join(change)
 
 dip2.wide<-dip2%>%
   left_join(change)%>%
@@ -31,6 +32,27 @@ ggplot(data=dip2%>%filter(scar!="Scar")%>%
          filter(UpdateTaxaID %in% graze.dip$UpdateTaxaID),
        aes(x=abundance,y=graze,fill=graze))+
   geom_boxplot()+
+  facet_wrap(~UpdateTaxaID,scales="free_x")
+
+ggplot(data=dip2%>%filter(scar!="Scar")%>%
+         filter(UpdateTaxaID %in% graze.dip$UpdateTaxaID),
+       aes(x=abundance,y=graze,fill=graze))+
+  geom_point(alpha=.4,size=4)+
+  facet_wrap(~UpdateTaxaID,scales="free_x")
+
+
+ggplot(data=dip2%>%filter(scar!="Scar")%>%
+         filter(UpdateTaxaID %in% graze.dip$UpdateTaxaID),
+       aes(y=abundance,x=pd.sdens,fill=graze))+
+  geom_point(alpha=.4,size=4,pch=21)+
+  facet_wrap(~UpdateTaxaID,scales="free_x")
+
+
+ggplot(data=dip2%>%filter(scar!="Scar")%>%
+         filter(UpdateTaxaID %in% graze.dip$UpdateTaxaID),
+       aes(y=abundance,x=graze,fill=pd.sdens))+
+  geom_point(alpha=.4,size=4,pch=21)+
+  geom_line(aes(group=blockID))+
   facet_wrap(~UpdateTaxaID,scales="free_x")
 
 # look at how many times these taxa have been seen
@@ -67,3 +89,4 @@ summary(spr)
 div<-lm(div~scar*pd.sdens,data=dip.env)
 plot(div)
 summary(div)
+

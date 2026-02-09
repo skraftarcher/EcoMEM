@@ -297,14 +297,15 @@ comd<-com2%>%
 
 
 # look at change in species richness
-spr<-lm(pchangespr~scar*pchangesd*sampling,data=comd%>%
+par(mfrow=c(2,2))
+spr<-lm(spr~scar+pchangesd+sampling,data=comd%>%
           filter(taxa=="Argopecten.irradians")%>%
           filter(sampling %in% c("s2","s5")))
 
 plot(spr)
 summary(spr)
 anova(spr)
-
+plot(ggeffect(spr,terms=c("pchangesd")))
 div<-lm(div~scar+pchangesd+sampling,data=comd%>%
           filter(taxa=="Argopecten.irradians")%>%
           filter(sampling %in% c("s2","s5")))
