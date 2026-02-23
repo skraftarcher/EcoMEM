@@ -285,7 +285,4 @@ dnbdiv2.hel[is.na(dnbdiv2.hel)] <- 0
 #pca
 sg.dn.bdiv2 <- sg.dn.bdiv %>%
   select(m.cover,plot.can,sht.d.m)
-dnbdiv2.rda<-rda(dnbdiv2.hel ~ ., data=sg.dn.bdiv2[-1:-3], na.action = na.exclude)
-
-plot(dnbdiv2.rda)
-summary(dnbdiv2.rda)
+dnbdiv2.rda<-rda(dnbdiv2.hel ~ ., data=sg.dn.bdiv2[-1:-3], na.act
