@@ -4,6 +4,7 @@ source("scripts/install_packages_function.R")
 source("scripts/download_all_experiment_data-EX.R")
 2
 
+
 lp("tidyverse")
 lp("readxl")
 library(obistools)
@@ -16,6 +17,8 @@ pos<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Plot Coordin
   group_by(plotID)%>%
   summarize(Latitude=mean(Lat),
             Longitude=mean(Long))
+plotinfo<-read.csv("odata/allplotinfo.csv")
+samplings<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
 
 wIDs<-distinct(tax[,2:3])%>%
   filter(!is.na(scientific))%>%
@@ -47,7 +50,7 @@ wID2<-left_join(distinct(tax[,1:2]),wormsIDs2)
 
 
 bdiv2<-bdiv%>%
-  filter(!is.na(dry.weight))%>%
+  #filter(!is.na(dry.weight))%>%
   mutate(Dry.weight.g=dry.weight-tin.weight,
          Dry.weight.g=ifelse(Dry.weight.g<0,0.001,Dry.weight.g))%>%
   select(plotID,sample.date,taxaID,abundance,Dry.weight.g)%>%
@@ -57,5 +60,15 @@ bdiv2<-bdiv%>%
 bdiv2<-bdiv2[-grep(bdiv2$UpdateTaxaID,pattern="egg"),]
 bdiv2<-bdiv2[-grep(bdiv2$UpdateTaxaID,pattern="WTF"),]
 
-bdiv2<-bdiv2[,c(1,10,11,2,7,8,9,4,5)]
-write.csv(bdiv2,"wdata/ECOMEM_dipnet_Sept232025_novouchersamples.csv",row.names=F)
+bdiv3<-bdiv2[,c(1:2,6:7,10:11,4:5)]%>%
+  rename(date=sample.date)%>%
+  left_join(plotinfo)%>%
+  mutate(sampling=case_when(
+    date >= samplings$Start.date[1] & date <=samplings$End.date[1]~samplings$sampling[1],
+    date >= samplings$Start.date[2] & date <=samplings$End.date[2]~samplings$sampling[2],
+    date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
+    date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
+    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]))
+  
+# write.csv(bdiv2,"wdata/ECOMEM_dipnet_Sept232025_novouchersamples.csv",row.names=F)
+write.csv(bdiv3,"wdata/feb32026_dipnet.csv",row.names = F)

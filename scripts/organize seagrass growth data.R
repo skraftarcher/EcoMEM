@@ -7,7 +7,7 @@ lp("tidyverse")
 lp("readxl")
 
 # load data
-sg.bm<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass growth- Lab.xlsx"),sheet=2)
+sg.bm<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass growth- Lab.xlsx"),sheet=2,n_max=574)# remove n_max when FIU fixes datasheet
 sg.s12<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass growth- Lab.xlsx"),sheet=3)%>%
   filter(shoot.numb!="LL")%>%
   mutate(shoot.numb=as.numeric(shoot.numb))

@@ -33,7 +33,7 @@ cor.bm2<-cor.bm%>%
     bm.g=dry.g2-foil.g,
     bm.g=ifelse(bm.g<=0,0.0001,bm.g))%>%
   group_by(sampling,time.var,plot,sample.type,sg.sp)%>%
-  summarize(bm.g=mean(bm.g),
+  summarize(bm.g=sum(bm.g,na.rm = T),
             ns=n())
 
 # things that have two foils should be QAQC'd again
