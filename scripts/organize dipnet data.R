@@ -2,7 +2,6 @@
 
 source("scripts/install_packages_function.R")
 source("scripts/download_all_experiment_data-EX.R")
-2
 
 
 lp("tidyverse")
@@ -11,14 +10,11 @@ library(obistools)
 lp("worrms")
 
 # load data
-bdiv<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - LAB - Dipnet.xlsx"),sheet=2)
-tax<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - LAB - Dipnet.xlsx"),sheet=4)
-pos<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Plot Coordinates.xlsx"),sheet=2)%>%
-  group_by(plotID)%>%
-  summarize(Latitude=mean(Lat),
-            Longitude=mean(Long))
-plotinfo<-read.csv("odata/allplotinfo.csv")
-samplings<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
+bdiv<-read_xlsx(paste0("odata/EXPERIMENT - LAB - Dipnet",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=2)
+tax<-read_xlsx(paste0("odata/EXPERIMENT - LAB - Dipnet",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=4)
+pos<-read_xlsx(paste0("odata/EXPERIMENT - LAB - Dipnet",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=2)%>%
+  group_by(plotID)
+samplings<-read_xlsx(paste0("odata/EXPERIMENT - Sampling Dates",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=1)
 
 wIDs<-distinct(tax[,2:3])%>%
   filter(!is.na(scientific))%>%
@@ -26,8 +22,6 @@ wIDs<-distinct(tax[,2:3])%>%
 # match with worms database
 
 wormsIDs<-data.frame(wIDs,match_taxa(wIDs$scientific))
-
-y
 
 # pull out spp records and add spp to worms scientific names
 wormspp<-wormsIDs[grep(wormsIDs$scientific,pattern=" sp"),]%>%
@@ -62,13 +56,19 @@ bdiv2<-bdiv2[-grep(bdiv2$UpdateTaxaID,pattern="WTF"),]
 
 bdiv3<-bdiv2[,c(1:2,6:7,10:11,4:5)]%>%
   rename(date=sample.date)%>%
-  left_join(plotinfo)%>%
   mutate(sampling=case_when(
     date >= samplings$Start.date[1] & date <=samplings$End.date[1]~samplings$sampling[1],
     date >= samplings$Start.date[2] & date <=samplings$End.date[2]~samplings$sampling[2],
     date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
     date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
-    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]))
+    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]),
+    time.var=case_when(
+      sampling=="s1"~1,
+      sampling=="s2"~2,
+      sampling=="s3"~3,
+      sampling=="s4"~4,
+      sampling=="s5"~5,
+    ))
   
 # write.csv(bdiv2,"wdata/ECOMEM_dipnet_Sept232025_novouchersamples.csv",row.names=F)
 write.csv(bdiv3,"wdata/feb32026_dipnet.csv",row.names = F)
