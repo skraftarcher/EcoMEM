@@ -3,7 +3,6 @@
 
 source("scripts/install_packages_function.R")
 source("scripts/download_all_experiment_data-EX.R")
-2
 
 lp("tidyverse")
 lp("readxl")
@@ -12,17 +11,24 @@ lp("vegan")
 library(obistools)
 
 # load data----
-bdiv<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Visual Survey Data.xlsx"),sheet=2)
-tax<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Visual Survey Data.xlsx"),sheet=4)
-samplings<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
-size<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Visual Survey Data.xlsx"),sheet=3)%>%
+bdiv<-read_xlsx(paste0("odata/EXPERIMENT - Visual Survey Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=2)
+tax<-read_xlsx(paste0("odata/EXPERIMENT - Visual Survey Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=4)
+samplings<-read_xlsx(paste0("odata/EXPERIMENT - Sampling Dates",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=1)
+size<-read_xlsx(paste0("odata/EXPERIMENT - Visual Survey Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=3)%>%
   rename(date=Date,taxaID=taxa)%>%
   mutate(sampling=case_when(
     date >= samplings$Start.date[1] & date <=samplings$End.date[1]~samplings$sampling[1],
     date >= samplings$Start.date[2] & date <=samplings$End.date[2]~samplings$sampling[2],
     date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
     date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
-    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]))
+    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]),
+    time.var=case_when(
+      sampling=="s1"~1,
+      sampling=="s2"~2,
+      sampling=="s3"~3,
+      sampling=="s4"~4,
+      sampling=="s5"~5,
+    ))
 
 wIDs<-tax%>%
   filter(taxaID %in% unique(bdiv$taxa))%>%
@@ -36,7 +42,7 @@ wIDs<-wIDs[-grep(wIDs$UpdateTaxaID,pattern="egg"),]
 # match with worms database
 
 wormsIDs<-data.frame(wIDs,match_taxa(wIDs$scientific))
-y
+
 wormspp<-wormsIDs[grep(wormsIDs$scientific,pattern=" sp"),]%>%
   separate(scientific,into=c("genus","sp"),sep=" ",remove=F)%>%
   separate(sp,into=c("c1","c2"),sep=-1,remove=F)%>%
@@ -73,7 +79,6 @@ wormsIDs_updatetax$scientific<-scientific
 
 wormsIDs4<-data.frame(wormsIDs_updatetax[,-3],match_taxa(wormsIDs_updatetax$scientific))
 
-y
 
 wormsIDs<-wormsIDs3%>%
   filter(!taxaID %in% wormsIDs4$taxaID)%>%
@@ -96,7 +101,14 @@ bdiv2<-bdiv%>%
     date >= samplings$Start.date[2] & date <=samplings$End.date[2]~samplings$sampling[2],
     date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
     date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
-    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]))%>%
+    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]),
+    time.var=case_when(
+      sampling=="s1"~1,
+      sampling=="s2"~2,
+      sampling=="s3"~3,
+      sampling=="s4"~4,
+      sampling=="s5"~5,
+    ))%>%
   group_by(sampling,blockID,plotID,UpdateTaxaID,scientificName,Surveyor)%>%
   summarize(total.n=sum(total.n))
 
@@ -291,11 +303,13 @@ ggplot(data=fulldat2,aes(color=sampling,y=delta.spr,x=ex))+
 #output adjusted dataset
 
 bdiv.out<-left_join(fulldat,bdiv3)%>%
-  mutate(scientificName=ifelse(is.na(scientificName),"dummy",scientificName))%>%
   select(-blockID,-UpdateTaxaID,-Surveyor,-total.n)%>%
   separate(plotID,into=c("blockID","treat"),sep=-2,remove=FALSE)%>%
+  mutate(time.var=case_when(
+    sampling=="s1"~1,
+    sampling=="s2"~2,
+    sampling=="s3"~3,
+    sampling=="s4"~4,
+    sampling=="s5"~5,))%>%
   pivot_wider(names_from=scientificName,values_from=adj.n,values_fill = 0)
-
-bdiv.out$dummy<-1
-
-write.csv(bdiv.out,"wdata/wide_vissurvey_datawithdummy.csv",row.names=F)
+write.csv(bdiv.out,"wdata/wide_vissurvey_data.csv",row.names=F)

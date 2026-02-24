@@ -2,17 +2,16 @@
 
 source("scripts/install_packages_function.R")
 source("scripts/download_all_experiment_data-EX.R")
-2
 
 lp("tidyverse")
 lp("readxl")
 
 # load data----
-pc<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass and macroalgae Data.xlsx"),sheet=2)
-sd<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass and macroalgae Data.xlsx"),sheet=3)
-can<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Seagrass and macroalgae Data.xlsx"),sheet=4)
-samplings<-read_xlsx(paste0("odata/downloaded_",Sys.Date(),"_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
-pinfo<-read.csv("odata/allplotinfo.csv")
+pc<-read_xlsx(paste0("odata/EXPERIMENT - Seagrass and macroalgae Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=2)
+sd<-read_xlsx(paste0("odata/EXPERIMENT - Seagrass and macroalgae Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=3)
+can<-read_xlsx(paste0("odata/EXPERIMENT - Seagrass and macroalgae Data",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=4)
+samplings<-read_xlsx(paste0("odata/EXPERIMENT - Sampling Dates",format(Sys.time(), '_%d_%B_%Y'),".xlsx"),sheet=1)
+
 # organize pc data ----
 pc.check<-pc%>%
   filter(quadrat<=4)%>%
@@ -44,9 +43,8 @@ pc2<-pc%>%
   group_by(date,blockID,plotID,sampling,mnths,taxa)%>%
   mutate(m.cover=mean(pcover))%>%
   pivot_wider(names_from=quadrat,values_from=pcover)%>%
-  left_join(pinfo)%>%
   ungroup()%>%
-  select(sampling,mnths,blockID,plotID,bay,scar,graze,taxa,
+  select(sampling,mnths,blockID,plotID,taxa,
          q1,q2,q3,q4,m.cover)
 
 write.csv(pc2,"wdata/experiment percent cover quadrat wide.csv",row.names = FALSE)
@@ -70,9 +68,8 @@ sd2<-sd%>%
   group_by(date,blockID,plotID,sampling,mnths,taxa)%>%
   mutate(m.density=mean(sdens))%>%
   pivot_wider(names_from=quadrat,values_from=sdens)%>%
-  left_join(pinfo)%>%
   ungroup()%>%
-  select(sampling,mnths,blockID,plotID,bay,scar,graze,taxa,
+  select(sampling,mnths,blockID,plotID,taxa,
          q1,q2,q3,q4,m.density)
 
 write.csv(sd2,"wdata/experiment shoot density quadrat wide.csv",row.names = FALSE)
@@ -92,8 +89,7 @@ can2<-can%>%
   pivot_wider(names_from = quadrat,values_from = m.canopy)%>%
   mutate(m.canopy=(q1+q2+q3+q4)/4)%>%
   left_join(samplings[,3:4])%>%
-  left_join(pinfo)%>%
-  select(sampling,mnths,blockID,plotID,bay,scar,graze,
+  select(sampling,mnths,blockID,plotID,
          q1,q2,q3,q4,m.canopy)
 
 write.csv(sd2,"wdata/experiment canopy quadrat wide.csv",row.names = FALSE)
