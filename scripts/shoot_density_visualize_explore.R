@@ -184,3 +184,118 @@ gast15<-glmmTMB(abund~scar*pchangesd,data=dip.comd%>%
 
 glmm.resids(gast15)
 summary(gast15)
+
+# generating figures-------------------------------------------------------------
+
+# species richness versus sampling
+ggplot(data=comd,aes(x=sampling,y=spr, color=sampling, fill=sampling))+
+  geom_jitter(alpha = 0.5, width = 0.2)+
+  geom_point()+
+  geom_smooth(aes(group = 1), method = "lm", color = "black", linetype = "dashed")+
+  labs(
+    title = "Species Richness Across Sampling Periods",
+    subtitle = "Significant increase observed from Sampling 2 to Sampling 5 (p < 0.001)",
+    x = "Sampling period",
+    y = "Species Richness"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+# diversity versus sampling
+ggplot(data=comd,aes(x=sampling,y=div, color=sampling, fill=sampling))+
+  geom_jitter(alpha = 0.5, width = 0.2)+
+  geom_point()+
+  geom_smooth(aes(group = 1), method = "lm", color = "black", linetype = "dashed")+
+  labs(
+    title = "Diversity Across Sampling Periods",
+    subtitle = "Significant increase observed from Sampling 2 to Sampling 5 (p < 0.001)",
+    x = "Sampling period",
+    y = "Diversity"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+# species richness and diversity versus shoot density---------------
+# calculate the break points for 3 equal-sized groups (tertiles)
+breaks <- quantile(comd$pchangesd, probs = seq(0, 1, by = 1/3), na.rm = TRUE)
+# create descriptive labels using the calculated numbers using round() to keep the labels clean
+labels <- c(
+  paste0("Low (", round(breaks[1], 1), " to ", round(breaks[2], 1), "%)"),
+  paste0("Med (", round(breaks[2], 1), " to ", round(breaks[3], 1), "%)"),
+  paste0("High (", round(breaks[3], 1), " to ", round(breaks[4], 1), "%)")
+)
+# create bins for shoot density change to allow for boxplots
+comd_binned <- comd %>%
+  mutate(density_group = cut(pchangesd,
+                             breaks = breaks, 
+                             labels = labels,
+                             include.lowest = TRUE))
+lp("ggpubr")
+# significance in boxplots
+# define the comparisons to test/display
+my_comparisons <- list( 
+  c(labels[1], labels[2]), 
+  c(labels[2], labels[3]), 
+  c(labels[1], labels[3]) 
+)
+
+# group boxplots
+# species richness
+ggplot(data=comd_binned,aes(x=density_group,y=spr, fill=density_group))+
+  geom_boxplot(alpha = 0.7, outlier.shape = NA)+
+  geom_jitter(color = "black", width = 0.1, alpha = 0.3)+
+  stat_compare_means(comparisons = my_comparisons, 
+                     method = "t.test", 
+                     label = "p.signif") + 
+  scale_fill_brewer(palette = "YlGn") +
+  labs(
+    title = "Species Richness By Shoot Density Change",
+    subtitle = paste0("Bins defined by tertiles of % change in shoot density", "\n",
+                      "Global ANOVA: F = 20.97, p < 0.001"),
+    x = "Percent Change in Shoot Density",
+    y = "Species Richness"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+# diversity
+ggplot(data=comd_binned,aes(x=density_group,y=div, fill=density_group))+
+  geom_boxplot(alpha = 0.7, outlier.shape = NA)+
+  geom_jitter(color = "black", width = 0.1, alpha = 0.3)+
+  stat_compare_means(comparisons = my_comparisons, 
+                     method = "t.test", 
+                     label = "p.signif") + 
+  scale_fill_brewer(palette = "YlGn") +
+  labs(
+    title = "Diversity By Shoot Density Change",
+    subtitle = paste0("Bins defined by tertiles of % change in shoot density", "\n",
+                      "Global ANOVA: F = 15.95, p < 0.001"),
+    x = "Percent Change in Shoot Density",
+    y = "Diversity"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+# three way interaction faceted scatter plot
+sample_names <- c(
+  "s2" = "Sampling 2",
+  "s5" = "Sampling 5"
+)
+ggplot(data=comd,aes(x=pchangesd, y=pchange, color=scar))+
+  geom_jitter(alpha = 0.5, width = 0.2)+
+  geom_point()+
+  geom_smooth(aes(group = 1), method = "lm", color = "black", linetype = "dashed")+
+  facet_wrap(~ sampling, scales = "fixed", labeller = as_labeller(sample_names))+
+  scale_color_manual(
+    values = c("no scar" = "#785EF0", "scar" = "#FFB000"), 
+    labels = c("No Scar", "Scarred")
+  ) +
+  labs(
+    title = "Interactive Effects of Seagrass Density and Scarring over Time",
+    subtitle = "Significant 3-way Interaction: F = 4.381, p < 0.05",
+    x = "Percent Change in Shoot Density",
+    y = "Percent Change in Scallop Abundance",
+    color = "Seagrass Treatment"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "bottom")
