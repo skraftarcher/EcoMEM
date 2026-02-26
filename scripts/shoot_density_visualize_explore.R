@@ -4,7 +4,31 @@
 
 # get community data
 dat<-read.csv("wdata/wide_vissurvey_data.csv")
-com<-dat[,-1:-4]
+com<-dat[,-1:-5]
+
+#look at top five most abundant taxa
+abundance<-colSums(com, na.rm=T)
+top_abund<-sort(abundance, decreasing = T)
+
+print(head(top_abund, 5))
+
+#look at top five most prevalent taxa
+preval<-colSums(com > 0, na.rm=T)
+top_preval<-sort(preval, decreasing = T)
+
+print(head(top_preval, 5))
+
+#see what taxa weren't present in s2 but are in s5
+bounce_back_analysis <- dat%>%
+  pivot_longer(cols=-colnames(dat[,1:5]), names_to = "taxa", values_to = "count")%>%
+  group_by(sampling, taxa) %>%
+  summarize(total_at_time = sum(count, na.rm = TRUE), .groups = "drop")%>%
+  filter(sampling %in% c("s2", "s5"))%>%
+  pivot_wider(names_from = sampling, values_from = total_at_time) %>%
+  filter(s2 == 0, s5 > 0)
+
+print("Taxa that were completely absent in S2 but returned in S5:")
+print(bounce_back_analysis, n=22)
 
 # get seagrass data
 dat3<-read.csv("wdata/thalassia p cover shoot density and canopy by quadrat long.csv")%>%
@@ -14,7 +38,7 @@ dat3<-read.csv("wdata/thalassia p cover shoot density and canopy by quadrat long
             mcan=mean(canopy,na.rm=T))
 
 # treatments information
-env<-dat[,1:4]%>%
+env<-dat[,1:5]%>%
   mutate(graze=case_when(
     treat=="UU"~"no graze",
     treat=="UG"~"graze",
@@ -33,7 +57,7 @@ env$spr<-specnumber(com)
 env$div<-diversity(com)
 env$even<-diversity(com)/log(specnumber(com))
 
-# look at taxa responses
+# look at taxa responses spr and div_
 com2<-dat%>%
   pivot_longer(-1:-5,names_to = "taxa",values_to="abund")%>%
   left_join(env)
@@ -85,6 +109,9 @@ par(mfrow=c(2,2))
 plot(scallops)
 summary(scallops)
 anova(scallops)
+
+lp("effectsize")
+eta_squared(scallops, partial = TRUE)
 
 # analyze species evenness and change in shoot density----------
 
