@@ -335,22 +335,26 @@ ggplot(data=comd,aes(x=pchangesd, y=pchange, color=scar, fill=scar))+
   geom_smooth(method = "lm", linetype = "dashed", se = TRUE)+
   facet_wrap(~ sampling, scales = "fixed", labeller = as_labeller(sample_names))+
   scale_color_manual(
-    name = "Seagrass Treatment",
     values = c("no scar" = "#785EF0", "scar" = "#FFB000"),
     labels = c("No Scar", "Scarred")
   ) +
   scale_fill_manual(
-    name = "Seagrass Treatment",
     values = c("no scar" = "#785EF0", "scar" = "#FFB000"),
     labels = c("No Scar", "Scarred")
   ) +
   labs(
     title = "Interactive Effects of Seagrass Density and Scarring over Time on Scallop Abundance Change",
     subtitle = "Significant 3-way Interaction: F = 4.381, p < 0.05",
-    x = "Percent Change in Shoot Density",
+    #x = "Percent Change in Shoot Density",
+    x = expression(Percent ~ Change ~ "in" ~ Shoot ~ Density: eta[p]^2 == 0.16),
     y = "Percent Change in Scallop Abundance",
-    color = "Seagrass Treatment"
+    #color = "Seagrass Treatment",
+    #fill = "Seagrass Treatment",
+    color = expression(Seagrass ~ Treatment: eta[p]^2 < 0.005),
+    fill = expression(Seagrass ~ Treatment: eta[p]^2 < 0.005)
   ) +
+  #scale_x_continuous(sec.axis = sec_axis(~ . , name = "Recovery Time", breaks = NULL, labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~ . , name = expression(Recovery ~ Time: eta[p]^2 == 0.03), breaks = NULL, labels = NULL))+
   theme_minimal()+
   theme(legend.position = "bottom",
         strip.text = element_text(size = 15),
@@ -358,6 +362,7 @@ ggplot(data=comd,aes(x=pchangesd, y=pchange, color=scar, fill=scar))+
         axis.text.y = element_text(size = 13),  
         axis.title.x = element_text(size = 18),
         axis.title.y = element_text(size = 18),
+        legend.title = element_text(size = 18),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
