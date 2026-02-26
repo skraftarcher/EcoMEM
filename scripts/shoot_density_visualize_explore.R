@@ -79,11 +79,12 @@ summary(div)
 anova(div)
 
 # change in scallop abundance with change in shoot density----------
-scallops<-aov(pchange~scar*pchangesd*sampling,data=comd)
+scallops<-lm(pchange~scar*pchangesd*sampling,data=comd)
 
 par(mfrow=c(2,2))
 plot(scallops)
 summary(scallops)
+anova(scallops)
 
 # analyze species evenness and change in shoot density----------
 
@@ -157,7 +158,12 @@ lp("glmmTMB")
 deca2<-glmmTMB(abund~scar*pchangesd,data=dip.comd%>%
                 filter(taxa == "Rhithropanopeus cf harrisii", sampling == "s2"),
                family = "poisson")
-
+glmm.resids<-function(deca2){
+  t1 <- simulateResiduals(deca2)
+  print(testDispersion(t1))
+  print(testZeroInflation(t1))
+  plot(t1)
+}
 glmm.resids(deca2)
 summary(deca2)
 
@@ -189,29 +195,45 @@ summary(gast15)
 
 # species richness and diversity versus shoot density---------------
 ggplot(data=comd,aes(x=pchangesd,y=spr))+
-  geom_jitter(alpha = 0.5, width = 0.2)+
   geom_point()+
   geom_smooth(aes(group = 1), method = "lm", color = "black", linetype = "dashed")+
   labs(
-    title = "Species Richness by Change in Seagrass Density",
+    title = "Species Richness by Change in Shoot Density",
     subtitle = "Significant positive relationship between density and richness (t=2.58,p=0.012)",
-    x = "Percent Change in Seagrass Density",
+    x = "Percent Change in Shoot Density",
     y = "Species Richness"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),  
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),,
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
 
 # diversity versus sampling
 ggplot(data=comd,aes(x=pchangesd,y=div))+
-  geom_jitter(alpha = 0.5, width = 0.2)+
   geom_point()+
   geom_smooth(aes(group = 1), method = "lm", color = "black", linetype = "dashed")+
   labs(
-    title = "Diversity by Change in Seagrass Density",
+    title = "Diversity by Change in Shoot Density",
     subtitle = "Significant positive relationship between density and diversity (t=2.03, p=0.046)",
-    x = "Percent Change in Seagrass Density",
+    x = "Percent Change in Shoot Density",
     y = "Diversity"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),  
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
 
 # species richness and diversity versus sampling------------------------
 lp("ggpubr")
@@ -226,16 +248,25 @@ ggplot(data=comd,aes(x=sampling,y=spr, fill=sampling))+
     method = "t.test", 
     label = "p.signif"
   )+
-  scale_x_discrete(labels = c("s2" = "Sampling 2", 
-                              "s5" = "Sampling 5"))+
+  scale_x_discrete(labels = c("s2" = "One month", 
+                              "s5" = "13 months"))+
   labs(
     title = "Species Richness Across Sampling Periods",
     subtitle = "Significant increase observed from Sampling 2 to Sampling 5 (p < 0.001)",
-    x = "Sampling",
+    x = "Time Post-Disturbance",
     y = "Species Richness"
   ) +
   theme_minimal()+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),  
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
 
 # diversity
 ggplot(data=comd,aes(x=sampling,y=div, fill=sampling))+
@@ -246,21 +277,30 @@ ggplot(data=comd,aes(x=sampling,y=div, fill=sampling))+
     method = "t.test", 
     label = "p.signif"
   )+
-  scale_x_discrete(labels = c("s2" = "Sampling 2", 
-                              "s5" = "Sampling 5"))+
+  scale_x_discrete(labels = c("s2" = "One month", 
+                              "s5" = "13 months"))+
   labs(
     title = "Diversity Across Sampling Periods",
     subtitle = "Significant increase observed from Sampling 2 to Sampling 5 (p < 0.001)",
-    x = "Sampling",
+    x = "Time Post-Disturbance",
     y = "Diversity"
   ) +
   theme_minimal()+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),  
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
 
 # three way interaction faceted scatter plot
 sample_names <- c(
-  "s2" = "Sampling 2",
-  "s5" = "Sampling 5"
+  "s2" = "One month post-disturbance",
+  "s5" = "13 months post-disturbance"
 )
 ggplot(data=comd,aes(x=pchangesd, y=pchange, color=scar, fill=scar))+
   geom_jitter(alpha = 0.5, width = 0.2)+
@@ -285,4 +325,14 @@ ggplot(data=comd,aes(x=pchangesd, y=pchange, color=scar, fill=scar))+
     color = "Seagrass Treatment"
   ) +
   theme_minimal()+
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        strip.text = element_text(size = 15),
+        axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),  
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
